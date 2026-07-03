@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Basics - Nested Condition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --yellow: #FFE500;
+            --blue: #00C6FF;
+            --black: #1A1A1A;
+            --white: #FFFFFF;
+            --bg-light: #E8E8E8;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            background-image: radial-gradient(#bcbcbc 2px, transparent 2px);
+            background-size: 30px 30px;
+            font-family: 'Fredoka', sans-serif;
+            color: var(--black);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* App Container (Landscape 16:9 Simulator) */
+        .app-container {
+            position: relative; z-index: 10;
+            width: 98vw; max-width: 1400px;
+            height: 98vh; max-height: 900px;
+            display: flex; flex-direction: column;
+        }
+
+        /* Header Layout */
+        .header {
+            display: flex; justify-content: flex-start; align-items: flex-start;
+            padding: 30px 50px 10px;
+            position: relative;
+            width: 100%;
+        }
+        
+        .header img.rg-logo { 
+            height: 40px; object-fit: contain; 
+            filter: brightness(0); /* Black logo */
+            position: relative; z-index: 20; 
+        }
+
+        /* Banner Centered at Top */
+        .banner-container { 
+            position: absolute; top: 25px; left: 0; width: 100%;
+            text-align: center; display: flex; flex-direction: column; align-items: center; 
+            z-index: 10; pointer-events: none;
+        }
+        
+        .banner-shape {
+            background-color: var(--blue);
+            padding: 12px 60px;
+            border: 4px solid var(--black);
+            border-radius: 12px;
+            box-shadow: 6px 6px 0px var(--black);
+            display: inline-block;
+        }
+        
+        .banner-text { 
+            font-size: 28px; font-weight: 700; letter-spacing: 2px; color: var(--white); 
+            text-shadow: 2px 2px 0px var(--black), -1px -1px 0px var(--black), 1px -1px 0px var(--black), -1px 1px 0px var(--black), 1px 1px 0px var(--black);
+        }
+        
+        .banner-subtitle {
+            background-color: var(--yellow); 
+            color: var(--black); 
+            padding: 8px 40px; 
+            font-size: 16px; font-weight: 700;
+            border: 3px solid var(--black);
+            border-radius: 20px; 
+            margin-top: -15px; 
+            text-transform: uppercase; letter-spacing: 1px;
+            box-shadow: 4px 4px 0px var(--black);
+            display: inline-block;
+        }
+
+        /* Slides Area */
+        .slides-area {
+            flex: 1; position: relative; margin: 30px 50px 0; perspective: 1200px;
+            min-height: 0; 
+        }
+
+        .slide {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: none;
+        }
+        
+        .slide.active { 
+            display: block; 
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .content-card {
+            background-color: var(--white);
+            border: 4px solid var(--black); 
+            border-radius: 24px;
+            padding: 40px 60px; 
+            box-shadow: 12px 12px 0px var(--black);
+            width: 100%; height: 100%; 
+            overflow-y: auto;
+            display: flex;
+            position: relative;
+        }
+
+        .content-card::-webkit-scrollbar { width: 14px; }
+        .content-card::-webkit-scrollbar-track { background: var(--bg-light); border-left: 3px solid var(--black); border-radius: 0 20px 20px 0; }
+        .content-card::-webkit-scrollbar-thumb { background: var(--blue); border: 3px solid var(--black); border-radius: 10px; }
+
+        /* Decorative corner element */
+        .content-card::after {
+            content: '';
+            position: absolute;
+            top: -15px; right: 30px;
+            width: 40px; height: 40px;
+            background-color: var(--yellow);
+            border: 3px solid var(--black);
+            border-radius: 50%;
+            box-shadow: 4px 4px 0px var(--black);
+            z-index: 5;
+        }
+
+        /* Inner container to restrict line width and center it */
+        .inner-content {
+            max-width: 900px;
+            margin: auto; /* Vertically & horizontally center */
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        .slide-title {
+            font-size: 32px; font-weight: 700; color: var(--black); 
+            margin-bottom: 30px; line-height: 1.3;
+            background-color: var(--yellow);
+            display: inline-block;
+            padding: 10px 25px;
+            border: 3px solid var(--black);
+            border-radius: 12px;
+            box-shadow: 5px 5px 0px var(--black);
+        }
+
+        .slide-text { font-size: 22px; line-height: 1.6; color: var(--black); font-weight: 600; }
+        .slide-text p { margin-bottom: 20px; }
+        .slide-text ul { padding-left: 40px; margin-bottom: 20px; }
+        .slide-text li { margin-bottom: 15px; position: relative; list-style-type: none; }
+        .slide-text li::before {
+            content: '▶';
+            color: var(--blue);
+            position: absolute;
+            left: -35px;
+            font-size: 20px;
+            -webkit-text-stroke: 1px var(--black);
+        }
+        
+        .slide-text strong { 
+            color: var(--black); 
+            background-color: var(--blue); 
+            padding: 2px 12px; 
+            border: 3px solid var(--black);
+            border-radius: 8px; 
+            font-weight: 700; 
+            box-shadow: 3px 3px 0px var(--black);
+            display: inline-block;
+            transform: rotate(-1deg);
+        }
+
+        .quote-box {
+            background-color: var(--yellow); 
+            border: 4px solid var(--black);
+            padding: 20px 30px; 
+            border-radius: 16px; 
+            margin: 30px 0; 
+            font-weight: 700; color: var(--black); font-size: 24px;
+            box-shadow: 8px 8px 0px var(--blue);
+            position: relative;
+        }
+
+        .code-block {
+            background-color: var(--black); 
+            border: 4px solid var(--black); border-radius: 16px;
+            padding: 25px 30px; font-family: 'Consolas', 'Courier New', monospace; font-size: 22px;
+            color: var(--white); overflow-x: auto; margin: 30px 0; 
+            box-shadow: 8px 8px 0px var(--yellow); 
+            line-height: 1.5;
+        }
+
+        .keyword { color: #FF9DE2; font-weight: bold; } /* Pink */
+        .string { color: #00E676; font-weight: bold; } /* Green */
+        .function { color: #00C6FF; font-weight: bold; } /* Blue */
+        .operator { color: #FFE500; font-weight: bold; } /* Yellow */
+
+        /* Navigation Controls */
+        .nav-container {
+            padding: 25px 50px 35px; display: flex; justify-content: space-between; align-items: center;
+            min-height: 100px;
+        }
+
+        .nav-btn {
+            background-color: var(--yellow); 
+            border: 4px solid var(--black);
+            color: var(--black); padding: 12px 35px; border-radius: 30px; cursor: pointer;
+            font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px;
+            transition: all 0.1s; display: flex; align-items: center; gap: 8px;
+            box-shadow: 6px 6px 0px var(--black);
+        }
+
+        .nav-btn:hover:not(:disabled) { 
+            transform: translate(-2px, -2px); box-shadow: 8px 8px 0px var(--black); 
+            background-color: #FFF033;
+        }
+        
+        .nav-btn:active:not(:disabled) {
+            transform: translate(4px, 4px); box-shadow: 2px 2px 0px var(--black);
+        }
+        
+        .nav-btn:disabled { 
+            background-color: #e0e0e0;
+            color: #888;
+            border-color: #888;
+            box-shadow: 2px 2px 0px #888; 
+            transform: translate(4px, 4px); 
+            cursor: not-allowed; 
+        }
+        
+        .counter-group {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            background: var(--white);
+            padding: 12px 30px;
+            border: 4px solid var(--black);
+            border-radius: 24px;
+            box-shadow: 6px 6px 0px var(--black);
+            transform: rotate(1deg);
+        }
+
+        .slide-counter { font-size: 18px; font-weight: 700; color: var(--black); }
+
+        .progress-bar-bg {
+            width: 200px; height: 18px; background-color: var(--bg-light); 
+            border: 3px solid var(--black); border-radius: 10px; overflow: hidden;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            height: 100%; background-color: var(--blue); 
+            border-right: 3px solid var(--black);
+            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .custom-input {
+            width: 100px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 16px;
+            padding: 5px 10px;
+            border: 3px solid var(--black);
+            border-radius: 8px;
+            color: var(--black);
+            text-align: center;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .custom-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 5px rgba(0, 198, 255, 0.5);
+        }
+        .custom-input.inline-input {
+            width: 80px;
+            font-family: monospace;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Presentation Area (Landscape 16:9 bounds) -->
+    <div class="app-container">
+        
+        <!-- Header -->
+        <div class="header">
+            
+            <div class="banner-container">
+                <div class="banner-shape">
+                    <div id="banner-title" class="banner-text">BASIC PEMROGRAMAN</div>
+                </div>
+                <div id="banner-subtitle" class="banner-subtitle">Condition</div>
+            </div>
+        </div>
+
+        <!-- Slides Wrapper -->
+        <div class="slides-area">
+            
+            <!-- Slide 1 -->
+            <div class="slide active">
+                <div class="content-card" style="align-items: center;">
+                    <div class="inner-content" style="display: flex; gap: 40px; align-items: center;">
+                        <div style="flex: 1;">
+                            <h2 class="slide-title">🤔 Membuat Program yang Bisa Memilih!</h2>
+                            <div class="slide-text">
+                                <p>Dalam coding, program tidak hanya berjalan lurus-lurus saja loh! 🤖</p>
+                                <p>Kadang program kita harus bisa <strong>memilih jalan</strong>:</p>
+                                <div class="quote-box">
+                                    "Kalau kondisinya begini, aku lakuin ini deh!" 💡<br><br>
+                                    "Tapi kalau gitu, aku lakuin yang lain!" 🚀
+                                </div>
+                                <p>Nah, di dunia pemrograman, konsep memilih jalan ini namanya <strong>Conditional</strong>.</p>
+                            </div>
+                        </div>
+                        <div style="flex: 0.8; text-align: center;">
+                            <img src="https://cdn-web-2.ruangguru.com/landing-pages/assets/68373719-8c0b-4196-91fd-feedf23a6e0a.png" alt="Robot Decision" style="width: 100%; max-width: 380px; border: 4px solid var(--black); border-radius: 16px; box-shadow: 8px 8px 0px var(--black); transform: rotate(2deg);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <!-- Slide FinLit 52 -->
+            <div class="slide">
+                <div class="content-card" style="background-color: var(--blue);">
+                    <div class="inner-content">
+                        <div class="title-slide">
+                            <h2 style="color: var(--yellow); font-size: 30px; margin-bottom: 10px;">Tugas Besar Kehadiran</h2>
+                            <h1 style="color: var(--white); font-size: 46px;">Smart Budget & Risk Planner 💼</h1>
+                        </div>
+                        <div class="slide-text" style="color: var(--white); margin-top: 20px;">
+                            <p style="font-size: 16px;">Buat program Python yang membantu merencanakan pengeluaran & risiko:</p>
+                            <ol style="font-size: 15px; text-align: left; display: inline-block; margin-left: 20px;">
+                                <li>Menyimpan jumlah uang pengguna & kategori budget.</li>
+                                <li>Menghitung total budget & sisa uang.</li>
+                                <li>Mengecek apakah budget aman.</li>
+                                <li>Mengevaluasi minimal 1 barang (kebutuhan/keinginan).</li>
+                                <li>Mengecek level risiko: <code>Low</code>, <code>Medium</code>, atau <code>High</code>.</li>
+                                <li>Memberikan rekomendasi & alasan logis.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide FinLit 53 -->
+            <div class="slide">
+                <div class="content-card">
+                    <div class="inner-content">
+                        <h2 class="slide-title">Ketentuan Program 📋</h2>
+                        <div class="slide-text">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                <div>
+                                    <p>Variable yang harus ada:</p>
+                                    <div class="code-block" style="font-size: 16px;">
+total_money<br>
+food_budget<br>
+transport_budget<br>
+school_budget<br>
+saving_budget<br>
+item<br>
+category<br>
+price<br>
+risk_level
+                                    </div>
+                                </div>
+                                <div>
+                                    <p>Program wajib menggunakan:</p>
+                                    <div class="code-block" style="font-size: 16px;">
+<span class="keyword">if</span><br>
+<span class="keyword">elif</span><br>
+<span class="keyword">else</span><br>
+nested condition
+                                    </div>
+                                    <p>Serta minimal satu logical operator:</p>
+                                    <div class="code-block" style="font-size: 16px;">
+<span class="keyword">and</span> / <span class="keyword">or</span> / <span class="keyword">not</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide FinLit 54 -->
+            <div class="slide">
+                <div class="content-card">
+                    <div class="inner-content">
+                        <h2 class="slide-title">Kriteria Kehadiran / Completion ✅</h2>
+                        <div class="slide-text" style="font-size: 14px;">
+                            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+                                <tr style="background-color: var(--blue); color: var(--white);">
+                                    <th style="padding: 10px; border: 1px solid var(--black);">Kriteria</th>
+                                    <th style="padding: 10px; border: 1px solid var(--black); text-align: center;">Wajib</th>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Memiliki variable untuk menyimpan uang dan budget</td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Menghitung total budget & sisa uang</td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Menggunakan <code>if</code>, <code>elif</code>, <code>else</code></td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Menggunakan nested condition</td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Menggunakan minimal satu logical operator</td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Mengevaluasi kebutuhan atau keinginan</td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Menentukan risiko <code>Low</code>, <code>Medium</code>, atau <code>High</code></td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ccc;">Menampilkan rekomendasi akhir & alasan logis</td>
+                                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">Ya</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="nav-container">
+            <button id="btnPrev" class="nav-btn" disabled>← Prev</button>
+            <div class="counter-group">
+                <div class="slide-counter"><span id="counter">1</span> / <span id="totalSlides"></span></div>
+                <div class="progress-bar-bg">
+                    <div id="bar" class="progress-bar" style="width: 20%;"></div>
+                </div>
+            </div>
+            <button id="btnNext" class="nav-btn">Next →</button>
+        </div>
+
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const bar = document.getElementById('bar');
+        const counter = document.getElementById('counter');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        let currentSlide = 0;
+        document.getElementById('totalSlides').innerText = slides.length;
+
+        function showSlide(index) {
+            slides[currentSlide].classList.remove('active');
+            
+            // Boundary checks
+            if (index < 0) index = 0;
+            if (index >= slides.length) index = slides.length - 1;
+            
+            currentSlide = index;
+            slides[currentSlide].classList.add('active');
+            
+            // Scroll content to top
+            const contentCard = slides[currentSlide].querySelector('.content-card');
+            if (contentCard) contentCard.scrollTo(0, 0);
+            
+            // Update UI
+            btnPrev.disabled = currentSlide === 0;
+            btnNext.disabled = currentSlide === slides.length - 1;
+            
+            counter.innerText = currentSlide + 1;
+            bar.style.width = ((currentSlide + 1) / slides.length * 100) + '%';
+
+            // Update Banner Text dynamically based on slide
+            const bannerTitle = document.getElementById('banner-title');
+            const bannerSubtitle = document.getElementById('banner-subtitle');
+            
+            if (bannerTitle) bannerTitle.innerText = "PYTHON BASICS";
+            
+            if (bannerSubtitle) {
+                let slideNum = currentSlide + 1;
+                if (slideNum >= 1 && slideNum <= 4) {
+                    if (bannerTitle) bannerTitle.innerText = "BASIC PEMROGRAMAN";
+                    bannerSubtitle.innerText = "Condition";
+                } else if (slideNum >= 5 && slideNum <= 17) {
+                    bannerSubtitle.innerText = "Basic Conditionals";
+                } else if (slideNum >= 18 && slideNum <= 24) {
+                    bannerSubtitle.innerText = "Multi Branch Conditionals";
+                } else if (slideNum >= 25 && slideNum <= 31) {
+                    bannerSubtitle.innerText = "Nested Conditionals";
+                } else if (slideNum >= 32 && slideNum <= 53) {
+                    bannerSubtitle.innerText = "Logic Operator on Python";
+                } else if (slideNum >= 54 && slideNum <= 57) {
+                    bannerSubtitle.innerText = "Case Study";
+                } else if (slideNum >= 58 && slideNum <= 60) {
+                    bannerSubtitle.innerText = "Debugging";
+                } else if (slideNum >= 61 && slideNum <= 65) {
+                    bannerSubtitle.innerText = "Mini Activity";
+                } else if (slideNum >= 66) {
+                    if (bannerTitle) bannerTitle.innerText = "Financial Literacy";
+                    if (slideNum >= 66 && slideNum <= 68) {
+                        bannerSubtitle.innerText = "Overview";
+                    } else if (slideNum >= 69 && slideNum <= 72) {
+                        bannerSubtitle.innerText = "Need vs Wants";
+                    } else if (slideNum >= 73 && slideNum <= 79) {
+                        bannerSubtitle.innerText = "Need vs Wants in Python";
+                    } else if (slideNum >= 80 && slideNum <= 82) {
+                        bannerSubtitle.innerText = "Budgeting";
+                    } else if (slideNum >= 83 && slideNum <= 89) {
+                        bannerSubtitle.innerText = "Budgeting in Python";
+                    } else if (slideNum >= 90 && slideNum <= 92) {
+                        bannerSubtitle.innerText = "Budgeting Program Example";
+                    } else if (slideNum >= 93 && slideNum <= 94) {
+                        bannerSubtitle.innerText = "Reflection";
+                    } else if (slideNum >= 95 && slideNum <= 102) {
+                        bannerSubtitle.innerText = "Financial Risk";
+                    } else if (slideNum >= 103 && slideNum <= 111) {
+                        bannerSubtitle.innerText = "Financial Risk in Programming";
+                    } else if (slideNum >= 112 && slideNum <= 114) {
+                        bannerSubtitle.innerText = "Financial Risk Programming Exercise";
+                    } else if (slideNum >= 115) {
+                        bannerSubtitle.innerText = "Mandatory Exercise";
+                    }
+                }
+            }
+        }
+
+        btnNext.addEventListener('click', () => {
+            if (currentSlide < slides.length - 1) showSlide(currentSlide + 1);
+        });
+        
+        btnPrev.addEventListener('click', () => {
+            if (currentSlide > 0) showSlide(currentSlide - 1);
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') {
+                return;
+            }
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlide < slides.length - 1) showSlide(currentSlide + 1);
+            }
+            if (e.key === 'ArrowLeft') {
+                if (currentSlide > 0) showSlide(currentSlide - 1);
+            }
+        });
+
+        // Guess Logic
+        function checkGuess(btn, isCorrect, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(b => {
+                b.disabled = true;
+                b.style.opacity = '0.5';
+            });
+            btn.style.opacity = '1';
+            
+            feedback.style.display = 'block';
+            if (isCorrect) {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+            } else {
+                feedback.innerHTML = `❌ <strong>SALAH!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkInputGuess(userVal, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            // normalize string by removing spaces and lowercasing
+            let normalizedUser = userVal.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (normalizedUser === 'ifumur>=17' || normalizedUser === 'ifumur>16' || normalizedUser === 'if(umur>=17)' || normalizedUser === 'if(umur>16)') {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('nested-input').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Coba cek lagi sintaks if dan kondisinya. (Petunjuk: butuh kata kunci 'if' lalu syarat 'umur &gt;= 17')`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkMB1QGuess(kwVal, condVal, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            let kw = kwVal.replace(/\s+/g, '').toLowerCase();
+            let cond = condVal.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (kw === 'elif' && (cond === 'age<18' || cond === 'age<=17')) {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('mb1-kw').disabled = true;
+                document.getElementById('mb1-cond').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Pastikan kamu menggunakan keyword 'elif' di kotak pertama dan mengecek kondisi 'age &lt; 18' di kotak kedua.`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkMB2QGuess(val1, val2, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            let n1 = val1.replace(/\s+/g, '').toLowerCase();
+            let n2 = val2.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (n1 === '90' && n2 === '75') {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('mb2-val1').disabled = true;
+                document.getElementById('mb2-val2').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Perhatikan urutannya! Syarat tersulit (nilai 90) harus dicek duluan di atas, lalu baru syarat yang lebih ringan (nilai 75).`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkAndGuess(userVal, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            let normalizedUser = userVal.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (normalizedUser === 'andaktif_organisasi==true' || normalizedUser === 'andaktif_organisasi' || normalizedUser === 'and(aktif_organisasi==true)') {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('and-input').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Coba lagi! Kamu butuh operator logika 'and' diikuti dengan kondisi pengecekan variabel aktif_organisasi.`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkOrGuess(userVal, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            let normalizedUser = userVal.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (normalizedUser === 'orada_kupon==true' || normalizedUser === 'orada_kupon' || normalizedUser === 'or(ada_kupon==true)') {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('or-input').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Coba lagi! Kamu butuh operator logika 'or' diikuti dengan kondisi pengecekan variabel ada_kupon.`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkParenGuess(userVal, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            let normalizedUser = userVal.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (normalizedUser === 'password_okand(is_adminoris_premium)' || normalizedUser === '(is_adminoris_premium)andpassword_ok' || normalizedUser === 'password_ok==trueand(is_admin==trueoris_premium==true)') {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('paren-input').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Pastikan kamu menggabungkan 'is_admin or is_premium' di dalam tanda kurung (), lalu gunakan 'and password_ok'.`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkNestedToLogicalGuess(userVal, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            let normalizedUser = userVal.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (normalizedUser === 'andcuaca=="cerah"' || normalizedUser === 'andcuaca==\'cerah\'') {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('logical-input').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Pastikan kamu menggunakan operator 'and' lalu cek apakah 'cuaca == "cerah"'.`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkLogicalToMultiBranchGuess(val1, val2, btn, explanation) {
+            const container = btn.parentElement;
+            const feedback = container.nextElementSibling;
+            
+            let n1 = val1.replace(/\s+/g, '').toLowerCase();
+            let n2 = val2.replace(/\s+/g, '').toLowerCase();
+            
+            feedback.style.display = 'block';
+            if (n1 === 'elif' && n2 === 'else') {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>${explanation}`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                document.getElementById('multibranch-input1').disabled = true;
+                document.getElementById('multibranch-input2').disabled = true;
+            } else {
+                feedback.innerHTML = `❌ <strong>KODE BELUM TEPAT!</strong><br>Cek lagi penggunaan strukturnya. Setelah 'if', biasanya diikuti oleh cabang alternatif pertama, lalu cabang terakhir yang menangkap sisa kondisinya.`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkFinLit47(btn) {
+            const slide = btn.closest('.slide');
+            const inputs = slide.querySelectorAll('.custom-input');
+            const feedback = slide.querySelector('.feedback');
+            
+            let allCorrect = true;
+            let correctCount = 0;
+            
+            inputs.forEach(input => {
+                const answer = input.getAttribute('data-answer').trim().toLowerCase();
+                const userVal = input.value.trim().toLowerCase();
+                if (userVal === answer) {
+                    input.style.borderColor = "#00E676";
+                    input.style.backgroundColor = "rgba(0, 230, 118, 0.1)";
+                    correctCount++;
+                } else {
+                    input.style.borderColor = "#FF0055";
+                    input.style.backgroundColor = "rgba(255, 0, 85, 0.1)";
+                    allCorrect = false;
+                }
+            });
+            
+            feedback.style.display = 'block';
+            if (allCorrect) {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>Semua level risiko sudah kamu tentukan dengan benar berdasarkan kategori barang, harga, dan sisa uang!`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                inputs.forEach(input => input.disabled = true);
+            } else {
+                feedback.innerHTML = `❌ <strong>BELUM SEPENUHNYA TEPAT!</strong><br>Kamu berhasil menjawab ${correctCount} dari 5 dengan benar. Periksa kembali jawaban yang berwarna merah!`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        function checkFinLit48(btn) {
+            const slide = btn.closest('.slide');
+            const inputs = slide.querySelectorAll('.custom-input');
+            const feedback = slide.querySelector('.feedback');
+            
+            let allCorrect = true;
+            let correctCount = 0;
+            
+            inputs.forEach(input => {
+                const answer = input.getAttribute('data-answer').trim().toLowerCase();
+                const userVal = input.value.trim().toLowerCase();
+                if (userVal === answer) {
+                    input.style.borderColor = "#00E676";
+                    input.style.backgroundColor = "rgba(0, 230, 118, 0.1)";
+                    correctCount++;
+                } else {
+                    input.style.borderColor = "#FF0055";
+                    input.style.backgroundColor = "rgba(255, 0, 85, 0.1)";
+                    allCorrect = false;
+                }
+            });
+            
+            feedback.style.display = 'block';
+            if (allCorrect) {
+                feedback.innerHTML = `✅ <strong>TEPAT SEKALI!</strong><br>Jika category bukan kebutuhan (else) dan sisa uang kurang dari 20.000, maka itu adalah risiko High. Jika sisa uang masih 20.000 ke atas, maka risikonya Medium!`;
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                inputs.forEach(input => input.disabled = true);
+            } else {
+                feedback.innerHTML = `❌ <strong>BELUM SEPENUHNYA TEPAT!</strong><br>Periksa kembali sisa uang pada kondisi nested if tersebut. Sisa uang kurang dari 20.000 adalah risiko High!`;
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+        }
+
+        // Quiz Logic
+        const quizQuestions = [
+            { q: "Syarat dalam pemrograman yang bernilai benar disebut dengan True.", ans: true },
+            { q: "Keputusan dalam pemrograman mirip seperti kita memilih tindakan di kehidupan nyata berdasarkan suatu syarat.", ans: true },
+            { q: "Komputer akan tetap menjalankan perintah di dalam 'if' walaupun syaratnya bernilai False.", ans: false },
+            { q: "Dalam membuat syarat (kondisi), kita tidak bisa membandingkan angka.", ans: false }
+        ];
+        let shuffledQ = [];
+        let currentQIndex = 0;
+
+        function initQuiz() {
+            shuffledQ = [...quizQuestions].sort(() => Math.random() - 0.5);
+            currentQIndex = 0;
+            showQuizQuestion();
+        }
+
+        function showQuizQuestion() {
+            const qText = document.getElementById('quiz-question-text');
+            const btnTrue = document.getElementById('quiz-btn-true');
+            const btnFalse = document.getElementById('quiz-btn-false');
+            const feedback = document.getElementById('quiz-feedback');
+            const btnNext = document.getElementById('btn-next-quiz');
+            
+            if (!qText) return;
+            
+            if (currentQIndex >= shuffledQ.length) {
+                qText.innerText = "Hebat! Kamu sudah menjawab semua pertanyaan! 🎉";
+                btnTrue.style.display = 'none';
+                btnFalse.style.display = 'none';
+                btnNext.style.display = 'none';
+                feedback.style.display = 'none';
+                return;
+            }
+            
+            qText.innerText = `Soal ${currentQIndex + 1}/4:\n${shuffledQ[currentQIndex].q}`;
+            btnTrue.style.display = 'block';
+            btnFalse.style.display = 'block';
+            feedback.style.display = 'none';
+            btnNext.style.display = 'none';
+            
+            btnTrue.disabled = false;
+            btnFalse.disabled = false;
+            btnTrue.style.opacity = '1';
+            btnFalse.style.opacity = '1';
+        }
+
+        function checkQuizAnswer(isTrueBtn) {
+            const correct = shuffledQ[currentQIndex].ans;
+            const isCorrect = (isTrueBtn === correct);
+            
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.style.display = 'block';
+            if (isCorrect) {
+                feedback.innerText = "✅ BENAR! Pintar sekali!";
+                feedback.style.backgroundColor = "#00E676";
+                feedback.style.color = "var(--black)";
+            } else {
+                feedback.innerText = "❌ SALAH! Ayo coba lagi di pertanyaan selanjutnya.";
+                feedback.style.backgroundColor = "#FF0055";
+                feedback.style.color = "white";
+            }
+
+            document.getElementById('quiz-btn-true').disabled = true;
+            document.getElementById('quiz-btn-false').disabled = true;
+            document.getElementById('quiz-btn-true').style.opacity = '0.5';
+            document.getElementById('quiz-btn-false').style.opacity = '0.5';
+
+            document.getElementById('btn-next-quiz').style.display = 'inline-block';
+        }
+
+        const btnTrueEl = document.getElementById('quiz-btn-true');
+        const btnFalseEl = document.getElementById('quiz-btn-false');
+        const btnNextQuizEl = document.getElementById('btn-next-quiz');
+        if(btnTrueEl) btnTrueEl.addEventListener('click', () => checkQuizAnswer(true));
+        if(btnFalseEl) btnFalseEl.addEventListener('click', () => checkQuizAnswer(false));
+        if(btnNextQuizEl) btnNextQuizEl.addEventListener('click', () => {
+            currentQIndex++;
+            showQuizQuestion();
+        });
+
+        window.addEventListener('load', initQuiz);
+    </script>
+</body>
+</html>
