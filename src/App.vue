@@ -627,6 +627,10 @@ const onIntroEnded = (stepId) => {
 };
 
 const togglePlay = (stepId) => {
+  if (playerStates.value[stepId] && !introPlayed.value[stepId]) {
+    playIntroThenVideo(stepId);
+    return;
+  }
   const player = players[stepId];
   if (!player || typeof player.getPlayerState !== "function") {
     initializeYouTubePlayer(stepId);
@@ -2304,12 +2308,14 @@ const getCover = (key) => {
             <div class="video-frame" :class="{ 'player-ready': playerStates[key]?.isReady }" :data-video-step="key">
             <video 
               v-show="playerStates[key]?.introPlaying"
+              :ref="(el) => { if (el) introRefs[key] = el; }"
               :src="introVideoSrc"
-              class="intro-video"
+              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 10; background: black;"
               controls
               @ended="onIntroEnded(key)"
               @play="onIntroPlay(key)"
               @pause="onIntroPause(key)"
+              playsinline
               preload="auto"
             ></video>
               <div :id="'youtube-player-' + key"></div>
