@@ -2302,6 +2302,16 @@ const getCover = (key) => {
         <template v-for="(data, key) in courseData" :key="key">
           <section class="step-panel" :id="'step-' + key" v-show="currentStep === Number(key)">
             <div class="video-frame" :class="{ 'player-ready': playerStates[key]?.isReady }" :data-video-step="key">
+            <video 
+              v-show="playerStates[key]?.introPlaying"
+              :src="introVideoSrc"
+              class="intro-video"
+              controls
+              @ended="onIntroEnded(key)"
+              @play="onIntroPlay(key)"
+              @pause="onIntroPause(key)"
+              preload="auto"
+            ></video>
               <div :id="'youtube-player-' + key"></div>
               <div class="custom-thumbnail" v-show="!playerStates[key]?.hasStarted" @click="togglePlay(Number(key))">
                 <div class="thumb-card-blue-bg"></div>
