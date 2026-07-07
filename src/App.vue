@@ -537,9 +537,16 @@ const enforceVideoBoundaries = (stepId) => {
 
   if (startBoundary > 0 && currentTime < startBoundary - 0.5) {
     player.seekTo(startBoundary, true);
-  } else if (endBoundary > 0 && currentTime >= endBoundary) {
-    player.seekTo(endBoundary, true);
+  } else if (endBoundary > 0 && currentTime >= endBoundary - 0.5) {
+    player.seekTo(startBoundary > 0 ? startBoundary : 0, true);
     player.pauseVideo();
+    videoWatchedStatus.value[stepId] = true;
+    
+    introPlayed.value[stepId] = false;
+    if (playerStates.value[stepId]) {
+      playerStates.value[stepId].hasStarted = false;
+      playerStates.value[stepId].isPlaying = false;
+    }
   }
 };
 
