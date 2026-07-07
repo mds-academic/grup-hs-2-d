@@ -2184,7 +2184,7 @@ const isStepFinished = (stepId) => {
   if (stepQuizzes && stepQuizzes.length > 0) {
     for (let quiz of stepQuizzes) {
       for (let q of quiz.questions) {
-        if (!q.qid) continue;
+        if (!q.qid || q.type === 'info') continue;
         const ans = studentProgress.value[`${q.qid}_Ans`];
         if (
           ans === undefined ||
