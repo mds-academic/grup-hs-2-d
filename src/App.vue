@@ -1117,7 +1117,7 @@ const registerFailedInputAttempt = (btn, feedbackEl) => {
   if (attempts >= 3) {
     attemptStatus.classList.add("limit-reached");
     markQuestionFailed(currentQuestion.value?.qid);
-    attemptStatus.innerHTML = "<strong>Sudah 3 kali salah.</strong><br>Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+    attemptStatus.innerHTML = "<strong>Sudah 3 kali mencoba.</strong><br>Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
     btn.disabled = true;
     btn.style.opacity = "0.55";
   } else {
@@ -1164,7 +1164,7 @@ const handleStandardAnswer = (answer) => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali salah. Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
     } else {
       quizState.value.quizFeedback = `Belum tepat. Coba cek lagi perlahan dan perhatikan petunjuk dari video. (Percobaan ${attempts}/3)`;
       setTimeout(() => {
@@ -1225,7 +1225,7 @@ const submitClassifyProblem = () => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali salah. Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
     } else {
       quizState.value.choicesDisabled = false;
       quizState.value.quizFeedback = `Masih ada yang keliru, coba baca ulang kalimat masalahnya. (Percobaan ${attempts}/3)`;
@@ -1269,7 +1269,7 @@ const submitArrangeFlow = () => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(q.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali salah. Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
     } else {
       quizState.value.quizFeedback = `Hmm, urutannya belum tepat. Coba cek lagi ya! (Percobaan ${attempts}/3)`;
       setTimeout(() => {
@@ -1306,7 +1306,7 @@ const submitMatchPairs = () => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali salah. Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
     } else {
       quizState.value.choicesDisabled = false;
       quizState.value.quizFeedback = `Ada yang kurang pas, ingat fitur harus sesuai dengan kebutuhan user. (Percobaan ${attempts}/3)`;
@@ -1352,7 +1352,7 @@ const submitFeasibilityBuckets = () => {
       if (attempts >= 3) {
         quizState.value.choicesDisabled = true;
         markQuestionFailed(item.qid);
-        quizState.value.quizFeedback = "Sudah 3 kali salah. Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+        quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
       } else {
         quizState.value.quizFeedback = `Ada fitur yang salah kamar. Coba ingat lagi apa yang paling feasible dibuat. (Percobaan ${attempts}/3)`;
       }
@@ -1377,7 +1377,7 @@ const submitFeasibilityBuckets = () => {
       if (attempts >= 3) {
         quizState.value.choicesDisabled = true;
         markQuestionFailed(item.qid);
-        quizState.value.quizFeedback = "Sudah 3 kali salah. Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+        quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
       } else {
         quizState.value.quizFeedback = `Kalimat masalah belum tepat, periksa lagi hubungannya. (Percobaan ${attempts}/3)`;
       }
@@ -1442,7 +1442,7 @@ const submitInputAnswer = () => {
     revealQuizNext();
   } else {
     if (attempts >= 3) {
-      quizState.value.quizFeedback = "Sudah 3 kali salah. Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.";
+      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
     } else {
@@ -1670,7 +1670,7 @@ const exposeGlobalMethods = () => {
       const attempts = qid ? studentProgress.value[`${qid}_Att`] || 1 : 1;
       if (attempts >= 3) {
         markQuestionFailed(qid);
-        feedback.innerHTML += `<br><strong>Sudah 3 kali salah.</strong> Nilai checkpoint ini menjadi 0 dan modul berikutnya tetap terkunci.`;
+        feedback.innerHTML += `<br><strong>Sudah 3 kali mencoba.</strong> Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.`;
       } else {
         buttons.forEach(b => {
           b.disabled = false;
