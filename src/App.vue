@@ -2125,6 +2125,11 @@ const prevStep = () => {
 };
 
 const nextStep = () => {
+  if (!isStepFinished(currentStep.value)) {
+    alert(`Mohon selesaikan video dan kuis/tugas di modul ini terlebih dahulu.`);
+    return;
+  }
+
   if (currentStep.value < totalSteps) {
     currentStep.value += 1;
     return;
