@@ -1216,7 +1216,7 @@ const submitClassifyProblem = () => {
     quizState.value.choicesDisabled = true;
     quizState.value.quizFeedbackType = 'success';
     quizState.value.quizFeedback = "Tepat sekali! Kamu menyusun kalimat masalah dengan sempurna.";
-    recordQuestionAttempt(item.qid, JSON.stringify(arrangeFlowAnswers.value), true);
+    recordQuestionAttempt(item.qid, JSON.stringify(classifyProblemAnswers.value), true);
     revealQuizNext();
   } else {
     let attempts = (failedAttempts.value[item.qid] || 0) + 1;
@@ -1369,7 +1369,7 @@ const submitFeasibilityBuckets = () => {
       quizState.value.choicesDisabled = true;
       quizState.value.quizFeedbackType = 'success';
       quizState.value.quizFeedback = "Kalimat masalahmu sudah lengkap dan benar!";
-      recordQuestionAttempt(item.qid, JSON.stringify({p1: feasibilityAnswers.value, p2: arrangeFlowAnswers.value}), true);
+      recordQuestionAttempt(item.qid, JSON.stringify({p1: feasibilityAnswers.value, p2: quizState.value.arrangeFlowAnswers}), true);
       revealQuizNext();
     } else {
       let attempts = (failedAttempts.value[item.qid + '_S2'] || 0) + 1;
