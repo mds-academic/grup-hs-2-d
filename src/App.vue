@@ -2323,7 +2323,6 @@ const getCover = (key) => {
               :ref="(el) => { if (el) introRefs[key] = el; }"
               :src="introVideoSrc"
               style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 10; background: black;"
-              controls
               @ended="onIntroEnded(key)"
               @play="onIntroPlay(key)"
               @pause="onIntroPause(key)"
