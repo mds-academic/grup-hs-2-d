@@ -614,15 +614,19 @@ const playIntroThenVideo = async (stepId) => {
 };
 
 const onIntroEnded = (stepId) => {
-  introPlayed.value[stepId] = true;
   playerStates.value[stepId].introPlaying = false;
+  introPlayed.value[stepId] = true;
   
-  const p = players.value[stepId];
-  if (p && typeof p.playVideo === 'function') {
-    p.playVideo();
+  const player = players[stepId];
+  if (!player || typeof player.getPlayerState !== "function") {
+    initializeYouTubePlayer(stepId);
+    setTimeout(() => {
+      if (players[stepId] && typeof players[stepId].playVideo === 'function') {
+         players[stepId].playVideo();
+      }
+    }, 500);
   } else {
-    pendingPlay.value[stepId] = true;
-    initYouTubePlayer(stepId);
+    player.playVideo();
   }
 };
 
