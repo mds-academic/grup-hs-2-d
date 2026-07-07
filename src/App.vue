@@ -170,6 +170,7 @@ const recordQuestionAttempt = (qid, answerStr, isCorrect) => {
     studentProgress.value[ansKey] = '0';
     studentProgress.value[`${qid}_Score`] = 0;
     studentProgress.value[`${qid}_Failed`] = true;
+    revealQuizNext();
   }
 
   localStorage.setItem('mds_student_progress', JSON.stringify(studentProgress.value));
@@ -1226,8 +1227,8 @@ const submitClassifyProblem = () => {
       markQuestionFailed(item.qid);
       quizState.value.quizFeedback = "Sudah 3 kali mencoba. Kamu boleh lanjut dulu, tapi perhatikan lagi videonya sebelum masuk ke bagian berikutnya.";
     } else {
+      quizState.value.choicesDisabled = false;
       quizState.value.quizFeedback = `Masih ada yang keliru, coba baca ulang kalimat masalahnya. (Percobaan ${attempts}/3)`;
-      // Let them retry
     }
   }
 };
