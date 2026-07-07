@@ -152,6 +152,7 @@ const markQuestionFailed = (qid) => {
   studentProgress.value[`${qid}_Failed`] = true;
   localStorage.setItem('mds_student_progress', JSON.stringify(studentProgress.value));
   syncToSheets();
+  revealQuizNext();
 };
 
 const recordQuestionAttempt = (qid, answerStr, isCorrect) => {
@@ -1117,11 +1118,11 @@ const registerFailedInputAttempt = (btn, feedbackEl) => {
   if (attempts >= 3) {
     attemptStatus.classList.add("limit-reached");
     markQuestionFailed(currentQuestion.value?.qid);
-    attemptStatus.innerHTML = "<strong>Sudah 3 kali mencoba.</strong><br>Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+    attemptStatus.innerHTML = "❌ <strong>Kesempatan habis.</strong> Lain kali perhatikan video ya.";
     btn.disabled = true;
     btn.style.opacity = "0.55";
   } else {
-    attemptStatus.textContent = `Percobaan ${attempts} dari 3. Periksa kembali kode atau jawabanmu sebelum mencoba lagi.`;
+    let remaining = 3 - attempts; attemptStatus.innerHTML = `❌ Jawaban salah. Sisa ${remaining} kesempatan.`;
   }
 
   feedbackEl.appendChild(attemptStatus);
@@ -1164,9 +1165,9 @@ const handleStandardAnswer = (answer) => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+      quizState.value.quizFeedback = "❌ Jawaban salah. Kesempatan habis. Lain kali perhatikan video ya.";
     } else {
-      quizState.value.quizFeedback = `Belum tepat. Coba cek lagi perlahan dan perhatikan petunjuk dari video. (Percobaan ${attempts}/3)`;
+      let remaining = 3 - attempts; quizState.value.quizFeedback = `❌ Jawaban salah. Sisa ${remaining} kesempatan.`;
       setTimeout(() => {
         if (!quizState.value.choicesDisabled) {
           quizState.value.selectedChoice = null;
@@ -1214,8 +1215,8 @@ const submitClassifyProblem = () => {
   if (isCorrect) {
     quizState.value.choicesDisabled = true;
     quizState.value.quizFeedbackType = 'success';
-    quizState.value.quizFeedback = "Tepat sekali! Kamu menyusun kalimat masalah dengan sempurna.";
-    recordQuestionAttempt(item.qid, JSON.stringify(classifyProblemAnswers.value), true);
+    quizState.value.quizFeedback = "✅ Luar biasa! Semua urutan sudah benar.";
+    recordQuestionAttempt(item.qid, JSON.stringify(arrangeFlowAnswers.value), true);
     revealQuizNext();
   } else {
     let attempts = (failedAttempts.value[item.qid] || 0) + 1;
@@ -1225,10 +1226,10 @@ const submitClassifyProblem = () => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+      quizState.value.quizFeedback = "❌ Jawaban salah. Kesempatan habis. Lain kali perhatikan video ya.";
     } else {
       quizState.value.choicesDisabled = false;
-      quizState.value.quizFeedback = `Masih ada yang keliru, coba baca ulang kalimat masalahnya. (Percobaan ${attempts}/3)`;
+      let remaining = 3 - attempts; quizState.value.quizFeedback = `❌ Jawaban salah. Sisa ${remaining} kesempatan.`;
     }
   }
 };
@@ -1269,9 +1270,9 @@ const submitArrangeFlow = () => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(q.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+      quizState.value.quizFeedback = "❌ Jawaban salah. Kesempatan habis. Lain kali perhatikan video ya.";
     } else {
-      quizState.value.quizFeedback = `Hmm, urutannya belum tepat. Coba cek lagi ya! (Percobaan ${attempts}/3)`;
+      let remaining = 3 - attempts; quizState.value.quizFeedback = `❌ Jawaban salah. Sisa ${remaining} kesempatan.`;
       setTimeout(() => {
         quizState.value.choicesDisabled = false;
         quizState.value.quizFeedback = '';
@@ -1306,10 +1307,10 @@ const submitMatchPairs = () => {
     if (attempts >= 3) {
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
-      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+      quizState.value.quizFeedback = "❌ Jawaban salah. Kesempatan habis. Lain kali perhatikan video ya.";
     } else {
       quizState.value.choicesDisabled = false;
-      quizState.value.quizFeedback = `Ada yang kurang pas, ingat fitur harus sesuai dengan kebutuhan user. (Percobaan ${attempts}/3)`;
+      let remaining = 3 - attempts; quizState.value.quizFeedback = `❌ Jawaban salah. Sisa ${remaining} kesempatan.`;
     }
   }
 };
@@ -1352,9 +1353,9 @@ const submitFeasibilityBuckets = () => {
       if (attempts >= 3) {
         quizState.value.choicesDisabled = true;
         markQuestionFailed(item.qid);
-        quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+        quizState.value.quizFeedback = "❌ Jawaban salah. Kesempatan habis. Lain kali perhatikan video ya.";
       } else {
-        quizState.value.quizFeedback = `Ada fitur yang salah kamar. Coba ingat lagi apa yang paling feasible dibuat. (Percobaan ${attempts}/3)`;
+        let remaining = 3 - attempts; quizState.value.quizFeedback = `❌ Jawaban salah. Sisa ${remaining} kesempatan.`;
       }
     }
   } else if (isFeasibilityFollowUp.value) {
@@ -1368,7 +1369,7 @@ const submitFeasibilityBuckets = () => {
       quizState.value.choicesDisabled = true;
       quizState.value.quizFeedbackType = 'success';
       quizState.value.quizFeedback = "Kalimat masalahmu sudah lengkap dan benar!";
-      recordQuestionAttempt(item.qid, JSON.stringify({p1: feasibilityAnswers.value, p2: quizState.value.arrangeFlowAnswers}), true);
+      recordQuestionAttempt(item.qid, JSON.stringify({p1: feasibilityAnswers.value, p2: arrangeFlowAnswers.value}), true);
       revealQuizNext();
     } else {
       let attempts = (failedAttempts.value[item.qid + '_S2'] || 0) + 1;
@@ -1377,9 +1378,9 @@ const submitFeasibilityBuckets = () => {
       if (attempts >= 3) {
         quizState.value.choicesDisabled = true;
         markQuestionFailed(item.qid);
-        quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+        quizState.value.quizFeedback = "❌ Jawaban salah. Kesempatan habis. Lain kali perhatikan video ya.";
       } else {
-        quizState.value.quizFeedback = `Kalimat masalah belum tepat, periksa lagi hubungannya. (Percobaan ${attempts}/3)`;
+        let remaining = 3 - attempts; quizState.value.quizFeedback = `❌ Jawaban salah. Sisa ${remaining} kesempatan.`;
       }
     }
   }
@@ -1442,7 +1443,7 @@ const submitInputAnswer = () => {
     revealQuizNext();
   } else {
     if (attempts >= 3) {
-      quizState.value.quizFeedback = "Sudah 3 kali mencoba. Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.";
+      quizState.value.quizFeedback = "❌ Jawaban salah. Kesempatan habis. Lain kali perhatikan video ya.";
       quizState.value.choicesDisabled = true;
       markQuestionFailed(item.qid);
     } else {
@@ -1667,16 +1668,8 @@ const exposeGlobalMethods = () => {
       feedback.innerHTML = `❌ <strong>SALAH!</strong><br>${explanation}`;
       feedback.style.backgroundColor = "#ff5c8a";
       feedback.style.color = "white";
-      const attempts = qid ? studentProgress.value[`${qid}_Att`] || 1 : 1;
-      if (attempts >= 3) {
-        markQuestionFailed(qid);
-        feedback.innerHTML += `<br><strong>Sudah 3 kali mencoba.</strong> Modul berikutnya tetap terkunci. Silakan ulangi bagian video ini untuk mencoba lagi.`;
-      } else {
-        buttons.forEach(b => {
-          b.disabled = false;
-          b.style.opacity = '1';
-        });
-      }
+      markQuestionFailed(qid);
+      revealQuizNext();
     }
   };
 
@@ -2176,6 +2169,12 @@ const openQuizButtonHandler = () => {
   }
 };
 
+const prevStep = () => {
+  if (currentStep.value > 1) {
+    currentStep.value -= 1;
+  }
+};
+
 const isStepFinished = (stepId) => {
   if (courseData[stepId]?.videoId) {
     if (!videoWatchedStatus.value[stepId]) return false;
@@ -2190,10 +2189,7 @@ const isStepFinished = (stepId) => {
         if (
           ans === undefined ||
           ans === null ||
-          ans === '' ||
-          ans === '-' ||
-          ans === '0' ||
-          studentProgress.value[`${q.qid}_Failed`] === true
+          ans === ''
         ) return false;
       }
     }
@@ -2209,7 +2205,11 @@ const goToStep = (step) => {
   }
   for (let i = 1; i < step; i++) {
     if (!isStepFinished(i)) {
-      alert(`Mohon selesaikan video dan kuis/tugas di Modul ${i} terlebih dahulu.`);
+      showDashboardNotice({
+        type: 'warning',
+        title: 'Modul belum selesai',
+        message: `Selesaikan video dan kuis/tugas di Modul ${i} terlebih dahulu sebelum membuka modul berikutnya.`
+      });
       return;
     }
   }
@@ -2222,20 +2222,25 @@ const handleStepSelect = (event) => {
   event.target.value = String(currentStep.value);
 };
 
-const prevStep = () => {
-  if (currentStep.value > 1) {
-    currentStep.value--;
-  }
-};
-
 const nextStep = () => {
   if (!isStepFinished(currentStep.value)) {
-    alert(`Mohon selesaikan video dan kuis/tugas di modul ini terlebih dahulu.`);
+    showDashboardNotice({
+      type: 'warning',
+      title: 'Modul belum selesai',
+      message: 'Selesaikan video dan kuis/tugas di modul ini terlebih dahulu sebelum lanjut.'
+    });
     return;
   }
-  if (currentStep.value < Object.keys(courseData).length) {
-    currentStep.value++;
+
+  if (currentStep.value < totalSteps) {
+    currentStep.value += 1;
+    return;
   }
+
+  showCompletionToast.value = true;
+  setTimeout(() => {
+    showCompletionToast.value = false;
+  }, 3800);
 };
 
 const getStepConfig = (stepId) => {
