@@ -1381,15 +1381,23 @@ const submitInputAnswer = () => {
   }
 
   quizState.value.quizFeedbackType = isCorrect ? 'correct' : 'wrong';
-  quizState.value.quizFeedback = feedbackText;
   recordQuestionAttempt(item.qid, input, isCorrect);
+  const attempts = studentProgress.value[item.qid + "_Att"] || 1;
 
   if (isCorrect) {
+    quizState.value.quizFeedback = feedbackText;
     quizState.value.choicesDisabled = true;
     revealQuizNext();
   } else {
-    // Biarkan tetap bisa mengisi lagi jika salah
-    quizState.value.choicesDisabled = false;
+    if (attempts >= 3) {
+      quizState.value.quizFeedback = "Sudah 3 kali salah. Jawabanmu masih belum tepat, tapi tidak apa-apa. Untuk sekarang kamu boleh lanjut dulu!";
+      quizState.value.choicesDisabled = true;
+      studentProgress.value[item.qid + "_Ans"] = '-';
+      revealQuizNext("Lanjut dulu →");
+    } else {
+      quizState.value.quizFeedback = feedbackText + ` (Percobaan ${attempts}/3)`;
+      quizState.value.choicesDisabled = false;
+    }
   }
 };
 
