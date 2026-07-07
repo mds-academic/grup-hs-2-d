@@ -318,6 +318,11 @@ for (const step in courseData) {
 }
 const playerStates = ref(initialPlayerStates);
 
+const introRefs = ref({});
+const introPlayed = ref({});
+const introVideoSrc = import.meta.env.BASE_URL + 'intro.mp4';
+
+
 const isFullscreen = ref(false);
 const videoContainers = ref({});
 
@@ -591,6 +596,36 @@ const playVideo = (stepId) => {
   }
   player.playVideo();
 };
+
+const playIntroThenVideo = async (stepId) => {
+  const introEl = introRefs.value[stepId];
+  if (introEl && !introPlayed.value[stepId]) {
+    playerStates.value[stepId].introPlaying = true;
+    playerStates.value[stepId].hasStarted = true;
+    await nextTick();
+    introEl.currentTime = 0;
+    introEl.play().catch(e => {
+      console.error("Intro video play error:", e);
+      onIntroEnded(stepId);
+    });
+  } else {
+    onIntroEnded(stepId);
+  }
+};
+
+const onIntroEnded = (stepId) => {
+  introPlayed.value[stepId] = true;
+  playerStates.value[stepId].introPlaying = false;
+  
+  const p = players.value[stepId];
+  if (p && typeof p.playVideo === 'function') {
+    p.playVideo();
+  } else {
+    pendingPlay.value[stepId] = true;
+    initYouTubePlayer(stepId);
+  }
+};
+
 const togglePlay = (stepId) => {
   const player = players[stepId];
   if (!player || typeof player.getPlayerState !== "function") {
@@ -1564,7 +1599,7 @@ const exposeGlobalMethods = () => {
       feedback.innerHTML = `❌ <strong>SALAH!</strong><br>${explanation}`;
       feedback.style.backgroundColor = "#ff5c8a";
       feedback.style.color = "white";
-      registerFailedInputAttempt(btn, feedback);
+      revealQuizNext("Lanjut dulu →");
     }
   };
 
