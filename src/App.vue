@@ -622,6 +622,9 @@ const updateVideoControls = (stepId) => {
   playerStates.value[stepId].progress = duration > 0 ? (currentTime / duration * 100) : 0;
   playerStates.value[stepId].durationFormatted = formatVideoTime(duration);
   playerStates.value[stepId].currentTimeFormatted = formatVideoTime(currentTime);
+  if (playerStates.value[stepId].progress >= 95) {
+    videoWatchedStatus.value[stepId] = true;
+  }
 };
 
 // Video actions
@@ -2610,7 +2613,7 @@ const getCover = (key) => {
           {{ currentQuestion ? currentQuestion.question : 'Memuat pertanyaan...' }}
         </div>
         <div v-if="currentQuestion && currentQuestion.html" id="quizCustomHtml" v-html="currentQuestion.html"></div>
-        <div v-show="currentQuestion && currentQuestion.type !== 'arrange_flow' && currentQuestion.type !== 'essay' && currentQuestion.type !== 'card_choice' && currentQuestion.type !== 'input' && currentQuestion.type !== 'info' && currentQuestion.type !== 'classify_problem' && currentQuestion.type !== 'match_pairs' && currentQuestion.type !== 'feasibility_buckets'" class="answer-row" id="answerRow">
+        <div v-show="currentQuestion && getQuestionChoices(currentQuestion).length > 0" class="answer-row" id="answerRow">
           <button 
             v-for="(choice, cIdx) in (currentQuestion ? currentQuestion.choices : [])" 
             :key="cIdx" 
