@@ -1101,7 +1101,7 @@ const revealQuizNext = (label = "Soal berikutnya →") => {
   quizState.value.isNextBtnVisible = true;
   
   nextTick(() => {
-    const nextBtn = document.querySelector('.quiz-next-btn');
+    const nextBtn = document.querySelector('.quiz-next');
     if (nextBtn) {
       nextBtn.scrollIntoView({ behavior: "smooth", block: "nearest" });
       nextBtn.focus({ preventScroll: true });
