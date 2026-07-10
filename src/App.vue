@@ -54,6 +54,7 @@ const quizModalStyles = ref({ transform: 'translateY(50px) scale(0.95)', opacity
 const currentStep = ref(1);
 const totalSteps = Object.keys(courseData).length;
 const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz58EffczfpcNL0bvbD6VZvrY3mrVNtmpWasSwJT0baOowD2yGu_KNM0YNul9EtxxKVpg/exec';
+const LEARNING_STATE_STORAGE_KEY = 'mds_ghs2d_learning_state';
 const isLoggedIn = ref(false);
 const loginSchool = ref('');
 const loginEmail = ref('');
@@ -399,6 +400,7 @@ onMounted(() => {
   if (savedProgress) {
     studentProgress.value = JSON.parse(savedProgress);
   }
+  restoreLearningState();
 });
 
 const videoWatchedStatus = ref({
@@ -458,6 +460,153 @@ const quizState = ref({
   inputAnswer: '',
   arrangeFlowAnswers: []
 });
+
+let learningStateHydrated = false;
+let lastLearningStatePersistedAt = 0;
+let pendingActiveQuizRestore = null;
+
+const getActiveQuizSnapshot = () => {
+  const stepId = quizState.value.activeQuizStep;
+  const quizConfig = quizState.value.activeQuizConfig;
+  if (!quizState.value.isOpen || !stepId || !quizConfig) return null;
+
+  const quizIndex = (courseData[stepId]?.quizzes || []).indexOf(quizConfig);
+  if (quizIndex < 0) return null;
+
+  return {
+    stepId: Number(stepId),
+    quizIndex,
+    currentQuestionIdx: quizState.value.currentQuestionIdx || 0
+  };
+};
+
+const isQuestionCompleted = (question) => {
+  if (!question?.qid || question.type === 'info' || question.continueOnly === true) return true;
+  const ans = studentProgress.value[`${question.qid}_Ans`];
+  const failed = studentProgress.value[`${question.qid}_Failed`];
+  return (ans !== undefined && ans !== null && ans !== '') || failed === true;
+};
+
+const isQuizCompleted = (quiz) => {
+  const requiredQuestions = (quiz?.questions || []).filter(q => q.qid && q.type !== 'info' && q.continueOnly !== true);
+  return requiredQuestions.length === 0 || requiredQuestions.every(isQuestionCompleted);
+};
+
+const getQuizShownSnapshot = () => {
+  const snapshot = {};
+  Object.keys(courseData).forEach((stepId) => {
+    snapshot[stepId] = (courseData[stepId]?.quizzes || []).map(quiz => quiz.shown === true);
+  });
+  return snapshot;
+};
+
+const getLastVideoTimeSnapshot = () => {
+  const snapshot = {};
+  Object.keys(courseData).forEach((stepId) => {
+    const player = players[stepId];
+    if (player && typeof player.getCurrentTime === 'function') {
+      snapshot[stepId] = Math.floor(player.getCurrentTime() || 0);
+      return;
+    }
+    const startBoundary = getVideoStartBoundary(stepId);
+    snapshot[stepId] = Math.floor(startBoundary + (playerStates.value[stepId]?.currentTime || 0));
+  });
+  return snapshot;
+};
+
+const persistLearningState = ({ force = false, activeQuiz } = {}) => {
+  if (!learningStateHydrated) return;
+
+  const now = Date.now();
+  if (!force && now - lastLearningStatePersistedAt < 1500) return;
+  lastLearningStatePersistedAt = now;
+
+  const state = {
+    currentStep: Number(currentStep.value),
+    videoWatchedStatus: { ...videoWatchedStatus.value },
+    quizShown: getQuizShownSnapshot(),
+    lastVideoTime: getLastVideoTimeSnapshot(),
+    activeQuiz: activeQuiz !== undefined ? activeQuiz : getActiveQuizSnapshot(),
+    updatedAt: new Date().toISOString()
+  };
+
+  localStorage.setItem(LEARNING_STATE_STORAGE_KEY, JSON.stringify(state));
+};
+
+const restoreLearningState = () => {
+  learningStateHydrated = true;
+
+  try {
+    const savedState = JSON.parse(localStorage.getItem(LEARNING_STATE_STORAGE_KEY) || 'null');
+    if (!savedState || typeof savedState !== 'object') return;
+
+    const restoredStep = Number(savedState.currentStep);
+    if (courseData[restoredStep]) {
+      currentStep.value = restoredStep;
+    }
+
+    if (savedState.videoWatchedStatus && typeof savedState.videoWatchedStatus === 'object') {
+      Object.keys(videoWatchedStatus.value).forEach((stepId) => {
+        videoWatchedStatus.value[stepId] = savedState.videoWatchedStatus[stepId] === true;
+      });
+    }
+
+    if (savedState.quizShown && typeof savedState.quizShown === 'object') {
+      Object.keys(savedState.quizShown).forEach((stepId) => {
+        const quizzes = courseData[stepId]?.quizzes || [];
+        quizzes.forEach((quiz, index) => {
+          quiz.shown = savedState.quizShown[stepId]?.[index] === true;
+        });
+      });
+    }
+
+    if (savedState.lastVideoTime && typeof savedState.lastVideoTime === 'object') {
+      Object.keys(savedState.lastVideoTime).forEach((stepId) => {
+        if (!playerStates.value[stepId]) return;
+        const absoluteTime = Number(savedState.lastVideoTime[stepId]) || 0;
+        const startBoundary = getVideoStartBoundary(stepId);
+        const relativeTime = Math.max(0, absoluteTime - startBoundary);
+        playerStates.value[stepId].currentTime = relativeTime;
+        playerStates.value[stepId].currentTimeFormatted = formatVideoTime(relativeTime);
+        playerStates.value[stepId].hasStarted = relativeTime > 0 || savedState.videoWatchedStatus?.[stepId] === true;
+      });
+    }
+
+    const activeQuiz = savedState.activeQuiz;
+    const activeStepId = Number(activeQuiz?.stepId);
+    const activeQuizIndex = Number(activeQuiz?.quizIndex);
+    const activeQuizConfig = courseData[activeStepId]?.quizzes?.[activeQuizIndex];
+    if (activeQuizConfig && !isQuizCompleted(activeQuizConfig)) {
+      currentStep.value = activeStepId;
+      activeQuizConfig.shown = true;
+      pendingActiveQuizRestore = {
+        stepId: activeStepId,
+        quizIndex: activeQuizIndex,
+        currentQuestionIdx: Number(activeQuiz.currentQuestionIdx) || 0
+      };
+    }
+  } catch (err) {
+    console.warn('Gagal memulihkan progress belajar:', err);
+  }
+};
+
+const restorePendingActiveQuiz = () => {
+  if (!pendingActiveQuizRestore) return;
+
+  const { stepId, quizIndex } = pendingActiveQuizRestore;
+  const quizConfig = courseData[stepId]?.quizzes?.[quizIndex];
+  pendingActiveQuizRestore = null;
+  if (!quizConfig || isQuizCompleted(quizConfig)) {
+    persistLearningState({ force: true, activeQuiz: null });
+    return;
+  }
+
+  const player = players[stepId];
+  if (player && typeof player.pauseVideo === 'function') {
+    player.pauseVideo();
+  }
+  openQuiz(quizConfig.questions, quizConfig.resume !== undefined ? quizConfig.resume : true, quizConfig.resumeTime, quizConfig, stepId);
+};
 
 const quizReturn = ref({
   isVisible: false
@@ -690,9 +839,11 @@ const updateVideoControls = (stepId) => {
   playerStates.value[stepId].progress = duration > 0 ? (currentTime / duration * 100) : 0;
   playerStates.value[stepId].durationFormatted = formatVideoTime(duration);
   playerStates.value[stepId].currentTimeFormatted = formatVideoTime(currentTime);
-  if (playerStates.value[stepId].progress >= 90) {
+  if (playerStates.value[stepId].progress >= 90 && !videoWatchedStatus.value[stepId]) {
     videoWatchedStatus.value[stepId] = true;
+    persistLearningState({ force: true });
   }
+  persistLearningState();
 };
 
 // Video actions
@@ -849,6 +1000,13 @@ const initializeYouTubePlayer = (stepId) => {
         
         event.target.setPlaybackQuality('hd1080');
         enforceVideoStartBoundary(normalizedStepId);
+        const savedState = JSON.parse(localStorage.getItem(LEARNING_STATE_STORAGE_KEY) || 'null');
+        const savedVideoTime = Number(savedState?.lastVideoTime?.[normalizedStepId]) || 0;
+        const startBoundary = getVideoStartBoundary(normalizedStepId);
+        if (savedVideoTime > startBoundary + 1 && typeof event.target.seekTo === 'function') {
+          event.target.seekTo(savedVideoTime, true);
+          playerStates.value[normalizedStepId].hasStarted = true;
+        }
         updateVideoControls(normalizedStepId);
       },
       onError: () => {
@@ -880,6 +1038,7 @@ const handlePlayerStateChange = (stepId, event) => {
 
   if (event.data === window.YT.PlayerState.ENDED) {
     videoWatchedStatus.value[stepId] = true;
+    persistLearningState({ force: true });
     debugLearningEvent(`Video ${stepId} selesai ditonton`, {
       status: 'video_selesai',
       tab: Number(stepId),
@@ -923,6 +1082,7 @@ const checkVideoQuizzes = (stepId) => {
 
     if (!quiz.shown && currentTime >= quiz.time) {
       quiz.shown = true;
+      persistLearningState({ force: true });
       player.pauseVideo();
       window.clearInterval(timeCheckers[stepId]);
 
@@ -983,6 +1143,7 @@ const openQuiz = (questionsArray, shouldResume = false, seekTime = null, quizCon
   quizState.value.arrangeFlowAnswers = [];
   quizState.value.isNextBtnVisible = false;
   quizState.value.nextBtnText = 'Soal berikutnya →';
+  persistLearningState({ force: true });
 
   const quizInfo = getQuizDebugInfo(quizConfig, stepId);
   debugLearningEvent(`Pop up quiz ${quizInfo.quizKe || '-'} dari ${quizInfo.totalQuizDiTab} di tab ${stepId} sedang dikerjakan`, {
@@ -1015,6 +1176,7 @@ const closeQuiz = (resumeVideo = false, seekTime = null) => {
 
   sheet.sequence.play({ direction: 'reverse', range: [0, 0.4] }).then(() => {
     quizState.value.isOpen = false;
+    persistLearningState({ force: true, activeQuiz: null });
   });
   if (resumeVideo && players[currentStep.value]) {
     const player = players[currentStep.value];
@@ -1674,6 +1836,7 @@ const goToNextQuestion = () => {
   quizState.value.quizFeedbackType = '';
   quizState.value.essayAnswer = '';
   quizState.value.isNextBtnVisible = false;
+  persistLearningState({ force: true });
   
   nextTick(() => {
     renderQuestion();
@@ -2301,6 +2464,9 @@ onMounted(() => {
     };
   }
   exposeGlobalMethods();
+  nextTick(() => {
+    restorePendingActiveQuiz();
+  });
 });
 
 watch(currentQuestion, (newQ) => {
@@ -2339,6 +2505,8 @@ watch(currentStep, (newStep) => {
   nextTick(() => {
     initializeYouTubePlayer(newStep);
   });
+  persistLearningState({ force: true });
+  restorePendingActiveQuiz();
 });
 
 const openQuizButtonHandler = () => {
