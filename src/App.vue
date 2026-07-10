@@ -2378,7 +2378,7 @@ const getStepQuizProgress = (stepId) => {
   const sessionCompletedCount = requiredQuizzes.filter(item => item.isCompleted && item.hasOpenedThisSession).length;
   const openedCount = requiredQuizzes.filter(item => item.hasOpenedThisSession).length;
   const activeQuizIndex = requiredQuizzes.findIndex(item => item.isActive) + 1;
-  const displayCompletedCount = openedCount > 0 ? Math.min(sessionCompletedCount, recordedCompletedCount) : recordedCompletedCount;
+  const displayCompletedCount = sessionCompletedCount;
 
   return { requiredQuizzes, total, recordedCompletedCount, displayCompletedCount, openedCount, activeQuizIndex };
 };
@@ -2402,8 +2402,7 @@ const getStepBlockingNotice = (stepId, targetStep = null) => {
     videoWatchedStatus.value[stepId] ||
     playerState.hasStarted ||
     playerState.currentTime > 0 ||
-    quizProgress.openedCount > 0 ||
-    quizProgress.recordedCompletedCount > 0
+    quizProgress.openedCount > 0
   );
 
   if (stepConfig.videoId && !videoStarted) {
