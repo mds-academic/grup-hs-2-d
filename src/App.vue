@@ -67,22 +67,30 @@ const dashboardNotice = reactive({
   type: 'warning',
   title: '',
   message: '',
-  actionLabel: 'Mengerti'
+  actionLabel: 'Mengerti',
+  actionStep: null
 });
 const dashboardNoticeIcon = computed(() => ({
   success: 'OK',
   warning: '!',
   error: '!'
 })[dashboardNotice.type] || '!');
-const showDashboardNotice = ({ type = 'warning', title = 'Perhatian', message = '', actionLabel = 'Mengerti' } = {}) => {
+const showDashboardNotice = ({ type = 'warning', title = 'Perhatian', message = '', actionLabel = 'Mengerti', actionStep = null } = {}) => {
   dashboardNotice.type = type;
   dashboardNotice.title = title;
   dashboardNotice.message = message;
   dashboardNotice.actionLabel = actionLabel;
+  dashboardNotice.actionStep = actionStep;
   dashboardNotice.isOpen = true;
 };
 const closeDashboardNotice = () => {
   dashboardNotice.isOpen = false;
+};
+const handleDashboardNoticeAction = () => {
+  if (dashboardNotice.actionStep) {
+    currentStep.value = dashboardNotice.actionStep;
+  }
+  closeDashboardNotice();
 };
 const schoolOptions = ref([]);
 const isSchoolLoading = ref(false);
@@ -2384,30 +2392,48 @@ const isStepFinished = (stepId) => {
   return quizProgress.requiredQuizzes.every(item => item.isCompleted);
 };
 
-const getStepBlockingMessage = (stepId, targetStep = null) => {
+const getStepBlockingNotice = (stepId, targetStep = null) => {
   const stepConfig = courseData[stepId] || {};
   const moduleLabel = `Modul ${stepId}`;
-  const missingItems = [];
-
-  if (stepConfig.videoId && !videoWatchedStatus.value[stepId]) {
-    missingItems.push(`Video ${moduleLabel} belum selesai ditonton sampai akhir. Yuk tonton lagi videonya sampai selesai.`);
-  }
-
   const quizProgress = getStepQuizProgress(stepId);
-  if (quizProgress.total > 0 && quizProgress.displayCompletedCount < quizProgress.total) {
-    const activeText = quizProgress.activeQuizIndex > 0
-      ? `Saat ini kamu sedang mengerjakan quiz ${quizProgress.activeQuizIndex} dari ${quizProgress.total}. `
-      : '';
-    const remaining = quizProgress.total - quizProgress.displayCompletedCount;
-    missingItems.push(`${activeText}Quiz/checkpoint ${moduleLabel} baru selesai ${quizProgress.displayCompletedCount} dari ${quizProgress.total}. Masih ada ${remaining} quiz/checkpoint lagi; lanjutkan video sampai checkpoint berikutnya muncul, lalu kerjakan quiznya sampai selesai.`);
+  const destinationLabel = targetStep ? `Modul ${targetStep}` : 'modul berikutnya';
+  const playerState = playerStates.value[stepId] || {};
+  const videoStarted = Boolean(
+    videoWatchedStatus.value[stepId] ||
+    playerState.hasStarted ||
+    playerState.currentTime > 0 ||
+    quizProgress.openedCount > 0 ||
+    quizProgress.recordedCompletedCount > 0
+  );
+
+  if (stepConfig.videoId && !videoStarted) {
+    return {
+      type: 'warning',
+      title: `Mulai ${moduleLabel} dulu ya!`,
+      message: `${destinationLabel} masih terkunci karena kamu belum mulai menonton video ${moduleLabel}.\n\nYuk mulai dari langkah pertama:\n\n1. Tonton video ${moduleLabel} sampai selesai.\n2. Setelah video selesai, kerjakan Quiz/Checkpoint ${moduleLabel}.\n3. Jika semua checkpoint sudah selesai, ${destinationLabel} akan terbuka otomatis.`,
+      actionLabel: `Mulai ${moduleLabel}`,
+      actionStep: Number(stepId)
+    };
   }
 
-  if (missingItems.length === 0) {
-    return `Selesaikan video dan kuis/tugas di ${moduleLabel} terlebih dahulu.`;
-  }
+  const videoIncomplete = stepConfig.videoId && !videoWatchedStatus.value[stepId];
+  const checkpointIncomplete = quizProgress.total > 0 && quizProgress.displayCompletedCount < quizProgress.total;
+  const statusText = videoIncomplete && checkpointIncomplete
+    ? `video ${moduleLabel} belum selesai ditonton dan quiz/checkpoint-nya belum lengkap`
+    : videoIncomplete
+      ? `video ${moduleLabel} belum selesai ditonton`
+      : `quiz/checkpoint ${moduleLabel} belum lengkap`;
+  const progressText = quizProgress.total > 0
+    ? `\n\nProgress kamu: ${quizProgress.displayCompletedCount} dari ${quizProgress.total} checkpoint selesai.`
+    : '';
 
-  const nextText = targetStep ? `Setelah itu baru bisa membuka Modul ${targetStep}.` : 'Setelah itu baru bisa lanjut.';
-  return `${missingItems.join(' ')} ${nextText}`;
+  return {
+    type: 'warning',
+    title: `${moduleLabel} belum selesai`,
+    message: `Kamu sudah mulai belajar, tapi ${statusText}.\n\nSelesaikan dulu video sampai akhir, lalu kerjakan quiz/checkpoint. Setelah semua checkpoint lengkap, ${destinationLabel} akan terbuka otomatis.${progressText}`,
+    actionLabel: `Lanjutkan ${moduleLabel}`,
+    actionStep: Number(stepId)
+  };
 };
 
 const goToStep = (step) => {
@@ -2417,11 +2443,7 @@ const goToStep = (step) => {
   }
   for (let i = 1; i < step; i++) {
     if (!isStepFinished(i)) {
-      showDashboardNotice({
-        type: 'warning',
-        title: 'Modul belum selesai',
-        message: getStepBlockingMessage(i, step)
-      });
+      showDashboardNotice(getStepBlockingNotice(i, step));
       return;
     }
   }
@@ -2436,11 +2458,7 @@ const handleStepSelect = (event) => {
 
 const nextStep = () => {
   if (!isStepFinished(currentStep.value)) {
-    showDashboardNotice({
-      type: 'warning',
-      title: 'Modul belum selesai',
-      message: getStepBlockingMessage(currentStep.value, currentStep.value + 1)
-    });
+    showDashboardNotice(getStepBlockingNotice(currentStep.value, currentStep.value + 1));
     return;
   }
 
@@ -3174,9 +3192,9 @@ const getCover = (key) => {
       <div class="dashboard-notice-copy">
         <p class="dashboard-notice-kicker">Checkpoint belajar</p>
         <h3 id="dashboardNoticeTitle">{{ dashboardNotice.title }}</h3>
-        <p>{{ dashboardNotice.message }}</p>
+        <p class="dashboard-notice-message">{{ dashboardNotice.message }}</p>
       </div>
-      <button type="button" class="dashboard-notice-action" @click="closeDashboardNotice">
+      <button type="button" class="dashboard-notice-action" @click="handleDashboardNoticeAction">
         {{ dashboardNotice.actionLabel }}
       </button>
     </section>
@@ -3259,6 +3277,10 @@ const getCover = (key) => {
   font-size: 16px;
   line-height: 1.45;
   font-weight: 700;
+}
+
+.dashboard-notice-message {
+  white-space: pre-line;
 }
 
 .dashboard-notice-action {
