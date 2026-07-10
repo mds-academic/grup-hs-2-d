@@ -2372,6 +2372,45 @@ const isStepFinished = (stepId) => {
   return true;
 };
 
+const getStepBlockingMessage = (stepId, targetStep = null) => {
+  const stepConfig = courseData[stepId] || {};
+  const moduleLabel = `Modul ${stepId}`;
+  const missingItems = [];
+
+  if (stepConfig.videoId && !videoWatchedStatus.value[stepId]) {
+    missingItems.push(`Video ${moduleLabel} belum selesai ditonton sampai akhir.`);
+  }
+
+  const requiredQuizzes = (stepConfig.quizzes || [])
+    .map((quiz, index) => {
+      const requiredQuestions = (quiz.questions || []).filter(q => q.qid && q.type !== 'info' && q.continueOnly !== true);
+      const isCompleted = requiredQuestions.length === 0 || requiredQuestions.every(q => {
+        const ans = studentProgress.value[`${q.qid}_Ans`];
+        return ans !== undefined && ans !== null && ans !== '';
+      });
+      return { quiz, index, requiredQuestions, isCompleted };
+    })
+    .filter(item => item.requiredQuestions.length > 0);
+
+  const completedQuizCount = requiredQuizzes.filter(item => item.isCompleted).length;
+  if (requiredQuizzes.length > 0 && completedQuizCount < requiredQuizzes.length) {
+    const activeQuizIndex = quizState.value.isOpen && Number(quizState.value.activeQuizStep) === Number(stepId)
+      ? requiredQuizzes.findIndex(item => item.quiz === quizState.value.activeQuizConfig) + 1
+      : 0;
+    const activeText = activeQuizIndex > 0
+      ? `Saat ini kamu sedang mengerjakan quiz ${activeQuizIndex} dari ${requiredQuizzes.length}. `
+      : '';
+    missingItems.push(`${activeText}Quiz/checkpoint ${moduleLabel} baru selesai ${completedQuizCount} dari ${requiredQuizzes.length}.`);
+  }
+
+  if (missingItems.length === 0) {
+    return `Selesaikan video dan kuis/tugas di ${moduleLabel} terlebih dahulu.`;
+  }
+
+  const nextText = targetStep ? `Setelah itu baru bisa membuka Modul ${targetStep}.` : 'Setelah itu baru bisa lanjut.';
+  return `${missingItems.join(' ')} ${nextText}`;
+};
+
 const goToStep = (step) => {
   if (step <= currentStep.value) {
     currentStep.value = step;
@@ -2382,7 +2421,7 @@ const goToStep = (step) => {
       showDashboardNotice({
         type: 'warning',
         title: 'Modul belum selesai',
-        message: `Selesaikan video dan kuis/tugas di Modul ${i} terlebih dahulu sebelum membuka modul berikutnya.`
+        message: getStepBlockingMessage(i, step)
       });
       return;
     }
@@ -2401,7 +2440,7 @@ const nextStep = () => {
     showDashboardNotice({
       type: 'warning',
       title: 'Modul belum selesai',
-      message: 'Selesaikan video dan kuis/tugas di modul ini terlebih dahulu sebelum lanjut.'
+      message: getStepBlockingMessage(currentStep.value, currentStep.value + 1)
     });
     return;
   }
