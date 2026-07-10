@@ -2349,27 +2349,39 @@ const prevStep = () => {
   }
 };
 
+const getStepQuizProgress = (stepId) => {
+  const requiredQuizzes = (courseData[stepId]?.quizzes || [])
+    .map((quiz) => {
+      const requiredQuestions = (quiz.questions || []).filter(q => q.qid && q.type !== 'info' && q.continueOnly !== true);
+      const isCompleted = requiredQuestions.length === 0 || requiredQuestions.every(q => {
+        const ans = studentProgress.value[`${q.qid}_Ans`];
+        return ans !== undefined && ans !== null && ans !== '';
+      });
+      const isActive = quizState.value.isOpen &&
+        Number(quizState.value.activeQuizStep) === Number(stepId) &&
+        quiz === quizState.value.activeQuizConfig;
+      const hasOpenedThisSession = quiz.shown === true || isActive;
+      return { quiz, requiredQuestions, isCompleted, isActive, hasOpenedThisSession };
+    })
+    .filter(item => item.requiredQuestions.length > 0);
+
+  const total = requiredQuizzes.length;
+  const recordedCompletedCount = requiredQuizzes.filter(item => item.isCompleted).length;
+  const sessionCompletedCount = requiredQuizzes.filter(item => item.isCompleted && item.hasOpenedThisSession).length;
+  const openedCount = requiredQuizzes.filter(item => item.hasOpenedThisSession).length;
+  const activeQuizIndex = requiredQuizzes.findIndex(item => item.isActive) + 1;
+  const displayCompletedCount = openedCount > 0 ? Math.min(sessionCompletedCount, recordedCompletedCount) : recordedCompletedCount;
+
+  return { requiredQuizzes, total, recordedCompletedCount, displayCompletedCount, openedCount, activeQuizIndex };
+};
+
 const isStepFinished = (stepId) => {
   if (courseData[stepId]?.videoId) {
     if (!videoWatchedStatus.value[stepId]) return false;
   }
 
-  const stepQuizzes = courseData[stepId]?.quizzes;
-  if (stepQuizzes && stepQuizzes.length > 0) {
-    for (let quiz of stepQuizzes) {
-      for (let q of quiz.questions) {
-        if (!q.qid || q.type === 'info' || q.continueOnly === true) continue;
-        const ans = studentProgress.value[`${q.qid}_Ans`];
-        if (
-          ans === undefined ||
-          ans === null ||
-          ans === ''
-        ) return false;
-      }
-    }
-  }
-
-  return true;
+  const quizProgress = getStepQuizProgress(stepId);
+  return quizProgress.requiredQuizzes.every(item => item.isCompleted);
 };
 
 const getStepBlockingMessage = (stepId, targetStep = null) => {
@@ -2378,29 +2390,16 @@ const getStepBlockingMessage = (stepId, targetStep = null) => {
   const missingItems = [];
 
   if (stepConfig.videoId && !videoWatchedStatus.value[stepId]) {
-    missingItems.push(`Video ${moduleLabel} belum selesai ditonton sampai akhir.`);
+    missingItems.push(`Video ${moduleLabel} belum selesai ditonton sampai akhir. Yuk tonton lagi videonya sampai selesai.`);
   }
 
-  const requiredQuizzes = (stepConfig.quizzes || [])
-    .map((quiz, index) => {
-      const requiredQuestions = (quiz.questions || []).filter(q => q.qid && q.type !== 'info' && q.continueOnly !== true);
-      const isCompleted = requiredQuestions.length === 0 || requiredQuestions.every(q => {
-        const ans = studentProgress.value[`${q.qid}_Ans`];
-        return ans !== undefined && ans !== null && ans !== '';
-      });
-      return { quiz, index, requiredQuestions, isCompleted };
-    })
-    .filter(item => item.requiredQuestions.length > 0);
-
-  const completedQuizCount = requiredQuizzes.filter(item => item.isCompleted).length;
-  if (requiredQuizzes.length > 0 && completedQuizCount < requiredQuizzes.length) {
-    const activeQuizIndex = quizState.value.isOpen && Number(quizState.value.activeQuizStep) === Number(stepId)
-      ? requiredQuizzes.findIndex(item => item.quiz === quizState.value.activeQuizConfig) + 1
-      : 0;
-    const activeText = activeQuizIndex > 0
-      ? `Saat ini kamu sedang mengerjakan quiz ${activeQuizIndex} dari ${requiredQuizzes.length}. `
+  const quizProgress = getStepQuizProgress(stepId);
+  if (quizProgress.total > 0 && quizProgress.displayCompletedCount < quizProgress.total) {
+    const activeText = quizProgress.activeQuizIndex > 0
+      ? `Saat ini kamu sedang mengerjakan quiz ${quizProgress.activeQuizIndex} dari ${quizProgress.total}. `
       : '';
-    missingItems.push(`${activeText}Quiz/checkpoint ${moduleLabel} baru selesai ${completedQuizCount} dari ${requiredQuizzes.length}.`);
+    const remaining = quizProgress.total - quizProgress.displayCompletedCount;
+    missingItems.push(`${activeText}Quiz/checkpoint ${moduleLabel} baru selesai ${quizProgress.displayCompletedCount} dari ${quizProgress.total}. Masih ada ${remaining} quiz/checkpoint lagi; lanjutkan video sampai checkpoint berikutnya muncul, lalu kerjakan quiznya sampai selesai.`);
   }
 
   if (missingItems.length === 0) {
