@@ -738,6 +738,12 @@ const onIntroEnded = (stepId) => {
   }
 };
 
+const onIntroPlay = (stepId) => {
+  if (!playerStates.value[stepId]) return;
+  playerStates.value[stepId].introPlaying = true;
+  playerStates.value[stepId].hasStarted = true;
+};
+
 const togglePlay = (stepId) => {
   if (playerStates.value[stepId] && !introPlayed.value[stepId]) {
     playIntroThenVideo(stepId);
@@ -1350,9 +1356,9 @@ const submitClassifyProblem = () => {
   const isCorrect = correctCount === item.parts.length;
   if (isCorrect) {
     quizState.value.choicesDisabled = true;
-    quizState.value.quizFeedbackType = 'success';
+    quizState.value.quizFeedbackType = 'correct';
     quizState.value.quizFeedback = "✅ Luar biasa! Semua urutan sudah benar.";
-    recordQuestionAttempt(item.qid, JSON.stringify(arrangeFlowAnswers.value), true);
+    recordQuestionAttempt(item.qid, JSON.stringify(classifyProblemAnswers.value), true);
     revealQuizNext();
   } else {
     let attempts = (failedAttempts.value[item.qid] || 0) + 1;
@@ -1395,13 +1401,17 @@ const submitArrangeFlow = () => {
   const isCorrect = JSON.stringify(quizState.value.arrangeFlowAnswers) === JSON.stringify(q.correctOrder);
 
   if (isCorrect) {
+    recordQuestionAttempt(q.qid, JSON.stringify(quizState.value.arrangeFlowAnswers), true);
     quizState.value.quizFeedback = "Benar sekali! Urutan alur aplikasinya sudah tepat. 🚀";
-    quizState.value.quizFeedbackType = "success";
+    quizState.value.quizFeedbackType = "correct";
     quizState.value.isNextBtnVisible = true;
     quizState.value.nextBtnText = "Lanjut";
   } else {
     let attempts = (failedAttempts.value[q.qid] || 0) + 1;
     failedAttempts.value[q.qid] = attempts;
+    if (attempts >= 3) {
+      recordQuestionAttempt(q.qid, JSON.stringify(quizState.value.arrangeFlowAnswers), false);
+    }
     quizState.value.quizFeedbackType = "wrong";
     
     if (attempts >= 3) {
@@ -1433,7 +1443,7 @@ const submitMatchPairs = () => {
   const isCorrect = correctCount === Object.keys(item.correctPairs).length;
   if (isCorrect) {
     quizState.value.choicesDisabled = true;
-    quizState.value.quizFeedbackType = 'success';
+    quizState.value.quizFeedbackType = 'correct';
     quizState.value.quizFeedback = "Luar biasa! Semua fitur terpasang dengan tepat.";
     recordQuestionAttempt(item.qid, JSON.stringify(matchPairsAnswers.value), true);
     revealQuizNext();
@@ -1477,7 +1487,7 @@ const submitFeasibilityBuckets = () => {
     });
 
     if (correctCount === item.items.length) {
-      quizState.value.quizFeedbackType = 'success';
+      quizState.value.quizFeedbackType = 'correct';
       quizState.value.quizFeedback = "Hebat! Pengelompokanmu akurat. Lanjut ke tantangan berikutnya!";
       // Show followup instead of revealing next
       setTimeout(() => {
@@ -1507,9 +1517,9 @@ const submitFeasibilityBuckets = () => {
     const isCorrect = correctCount === item.followUp.blanks.length;
     if (isCorrect) {
       quizState.value.choicesDisabled = true;
-      quizState.value.quizFeedbackType = 'success';
+      quizState.value.quizFeedbackType = 'correct';
       quizState.value.quizFeedback = "Kalimat masalahmu sudah lengkap dan benar!";
-      recordQuestionAttempt(item.qid, JSON.stringify({p1: feasibilityAnswers.value, p2: arrangeFlowAnswers.value}), true);
+      recordQuestionAttempt(item.qid, JSON.stringify({p1: feasibilityAnswers.value, p2: fillInBlankAnswers.value}), true);
       revealQuizNext();
     } else {
       let attempts = (failedAttempts.value[item.qid + '_S2'] || 0) + 1;
